@@ -7,6 +7,6 @@ export const errorify = (err: string): Error => ({
 
 ${err}
 
-Please report an issue at https://github.com/Borrus-sudo/cf/issues
+Please report an issue at https://github.com/Borrus-sudo/cf/issues if you think this is a bug 🐞
 `,
 });

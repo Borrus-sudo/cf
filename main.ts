@@ -16,7 +16,9 @@ const getClipboardHistory = (): Result<string[], Error> => {
 
     const arrPtr = lib.symbols.get_clipboard_items();
     if (arrPtr === null)
-        return errorify(`Could not retrieve the clipboard history!`);
+        return errorify(
+            `Could not retrieve the clipboard history, make sure the Clipboard History is on, press "Win + V" for the same`
+        );
 
     const base = new Deno.UnsafePointerView(arrPtr);
 
@@ -28,9 +30,14 @@ const getClipboardHistory = (): Result<string[], Error> => {
         items.push(str);
     }
 
+    if (!items.length)
+        return errorify(
+            'Please copy the expected input and output into the clipboard. If you have done so, try making sure that getClipboardHistory is on by pressing "Win + V"'
+        );
+
     lib.symbols.free_clipboard_items(arrPtr, count);
 
-    return items;
+    return items.reverse();
 };
 
 const parseArgs = async (): Promise<Result<string, Error>> => {
@@ -42,6 +49,55 @@ const parseArgs = async (): Promise<Result<string, Error>> => {
     return fileLoc;
 };
 
+const getInpOut = (
+    clipHist: string[]
+): Result<{ inp: string; out: string }, Error> => {
+    let inp: string = '';
+    let out: string = '';
+
+    for (let idx = 0; idx < clipHist.length; idx++) {
+        const text = clipHist[idx];
+        if (/[0-9]/.test(text.trim().charAt(0))) {
+            const expectedLines = parseInt(text.trim().charAt(0));
+            const actualLines = text.split('\n').length;
+            if ((actualLines - 1) % expectedLines == 0) {
+                inp = text;
+                let buffOut = '';
+                if (idx - 1 >= 0) {
+                    buffOut = clipHist[idx - 1];
+                    if (buffOut.split('\n').length % expectedLines == 0) {
+                        out = buffOut;
+                    }
+                }
+                if (idx + 1 < clipHist.length) {
+                    buffOut = clipHist[idx + 1];
+                    if (buffOut.split('\n').length % expectedLines == 0) {
+                        out = buffOut;
+                    }
+                }
+                if (out) break;
+            }
+        }
+    }
+
+    if (!inp || !out)
+        return errorify(
+            'Please make sure that the input and output have been copied to the clipboard, make a fresh copy and try again!'
+        );
+
+    return { inp, out };
+};
+
+const exec = () => {};
+
+const isError = (inp: unknown): inp is Error =>
+    typeof inp == 'object' && inp != null && Object.hasOwn(inp, 'msg');
+
 if (import.meta.main) {
-    // main();
+    const items = getClipboardHistory();
+
+    if (isError(items)) {
+        console.log(items.msg);
+        Deno.exit();
+    }
 }
