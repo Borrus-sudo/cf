@@ -43,7 +43,10 @@ const getClipboardHistory = (): Result<string[], Error> => {
 const parseArgs = async (): Promise<Result<string, Error>> => {
     const args = Deno.args;
     if (!args.length) return errorify('Please pass the filename!');
-    const fileLoc = path.join(Deno.cwd(), args[0]);
+    const fileLoc = path.join(
+        Deno.cwd(),
+        args[0].endsWith('.cpp') ? args[0] : args[0] + '.cpp'
+    );
     const exists = await fs.exists(fileLoc);
     if (!exists) return errorify(`File not found at location ${fileLoc}`);
     return fileLoc;
@@ -159,11 +162,12 @@ const printDiff = ({ expected, received, tcs }: DiffStringsParams): void => {
 
         if (!allMatched) {
             failedTC++;
-            console.log(`Failed Test Case Number: ${(i % outputInc) + 1}`);
+            console.log(`Failed Test Case Number: ${i / outputInc + 1}`);
             console.log('Expected: ');
             console.log(expectedStitch.trim());
             console.log('Received: ');
             console.log(receivedStitch.trim());
+            console.log();
         }
     }
 

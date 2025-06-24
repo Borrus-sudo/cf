@@ -1,6 +1,7 @@
 {
     "tasks": {
-        "dev": "deno run --allow-ffi --allow-read --allow-run main.ts p1.cpp"
+        "dev": "deno run --allow-ffi --allow-read --allow-run main.ts p1.cpp", 
+        "compile": "deno compile --allow-ffi --allow-read --allow-run --include ./clipboard/clipboard.dll main.ts"
     },
     "imports": {
         "@std/fs": "jsr:@std/fs@^1.0.18",
