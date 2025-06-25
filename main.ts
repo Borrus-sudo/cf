@@ -62,7 +62,7 @@ const getIO = (
     for (let idx = 0; idx < clipHist.length; idx++) {
         const textLines = clipHist[idx].trim().split('\n');
 
-        if (/[0-9]/.test(textLines[0].trim())) {
+        if (!isNaN(parseInt(textLines[0].trim()))) {
             const expectedTcs = parseInt(textLines[0].trim());
             const realNoLines = textLines.length;
 
@@ -90,7 +90,7 @@ const getIO = (
         }
     }
 
-    if (!inp || !out)
+    if (!inp.length || !out.length)
         return errorify(
             'Please make sure that the input and output have been copied to the clipboard, make a fresh copy and try again!'
         );
@@ -191,6 +191,7 @@ if (import.meta.main) {
         console.log(io.msg);
         Deno.exit();
     }
+
 
     const fileLoc = await parseArgs();
 
