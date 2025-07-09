@@ -65,10 +65,10 @@ const getIO = (
         if (!isNaN(parseInt(textLines[0].trim()))) {
             const expectedTcs = parseInt(textLines[0].trim());
             const realNoLines = textLines.length;
+            inp = textLines;
+            let buffOut = [];
 
             if ((realNoLines - 1) % expectedTcs == 0) {
-                inp = textLines;
-                let buffOut = [];
                 // We get the latest at the front and we prefer the behind ones
                 if (idx + 1 < clipHist.length) {
                     buffOut = clipHist[idx + 1].trim().split('\n');
@@ -82,10 +82,27 @@ const getIO = (
                         out = buffOut;
                     }
                 }
-                if (out.length > 0) {
-                    tcs = expectedTcs;
-                    break;
+            } else if (
+                textLines[1] &&
+                textLines[1].split(' ').length == expectedTcs
+            ) {
+                if (idx + 1 < clipHist.length) {
+                    buffOut = [clipHist[idx + 1].trim()];
+                    if (!isNaN(parseInt(clipHist[idx + 1].trim()))) {
+                        out = buffOut;
+                    }
                 }
+                if (idx - 1 >= 0) {
+                    buffOut = [clipHist[idx + 1].trim()];
+                    if (!isNaN(parseInt(clipHist[idx + 1].trim()))) {
+                        out = buffOut;
+                    }
+                }
+            }
+
+            if (out.length > 0) {
+                tcs = expectedTcs;
+                break;
             }
         }
     }
@@ -191,7 +208,6 @@ if (import.meta.main) {
         console.log(io.msg);
         Deno.exit();
     }
-
 
     const fileLoc = await parseArgs();
 
