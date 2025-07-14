@@ -66,10 +66,10 @@ export function Tasks() {
             spinner.start();
         },
         succeedTask() {
-            spinner.succeed(`✅ Finished: ${spinner.getText()}`);
+            spinner.succeed(`Finished: ${spinner.getText()}`);
         },
         failTask(error: string) {
-            spinner.fail(`❌ Failed: ${spinner.getText()}`);
+            spinner.fail(`Failed: ${spinner.getText()}`);
             console.log(error);
         },
         infoTask(info: string) {

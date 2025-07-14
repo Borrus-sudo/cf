@@ -64,14 +64,16 @@ const getIO = (
     let out: string[] = [];
     let tcs = -1;
 
+    // LATEST at the idx 0 in clipHist and so on ...
+
     for (let idx = 0; idx < clipHist.length; idx++) {
         const textLines = clipHist[idx].trim().split('\n');
 
         if (!isNaN(parseInt(textLines[0].trim()))) {
-            const expectedTcs = parseInt(textLines[0].trim());
             const realNoLines = textLines.length;
             inp = textLines;
             let buffOut = [];
+            let expectedTcs = parseInt(textLines[0].trim());
 
             if ((realNoLines - 1) % expectedTcs == 0) {
                 // We get the latest at the front and we prefer the behind ones
@@ -95,12 +97,14 @@ const getIO = (
                     buffOut = [clipHist[idx + 1].trim()];
                     if (!isNaN(parseInt(clipHist[idx + 1].trim()))) {
                         out = buffOut;
+                        expectedTcs = -1; // sentinel value (very hacky), this is the exit condition, hence fine
                     }
                 }
                 if (idx - 1 >= 0) {
                     buffOut = [clipHist[idx + 1].trim()];
                     if (!isNaN(parseInt(clipHist[idx + 1].trim()))) {
                         out = buffOut;
+                        expectedTcs = -1; // sentinel value (very hacky), this is the exit condition, hence fine
                     }
                 }
             }
@@ -112,10 +116,22 @@ const getIO = (
         }
     }
 
-    if (!inp.length || !out.length)
+    if (!inp.length || !out.length) {
+        // fallback to the first clip history
+        // INPUT at 1 and OUTPUT at 0
+        const potentialInput = clipHist[1] ?? '';
+        const potentialOutput = clipHist[0] ?? '';
+        if (!isNaN(parseInt(potentialInput.split('\n')[1].trim()))) {
+            return {
+                inp: potentialInput.split('\n'),
+                out: potentialOutput.split('\n'),
+                tcs: -2,
+            };
+        }
         return {
             msg: 'Please make sure that the input and output have been copied to the clipboard, make a fresh copy and try again!',
         };
+    }
 
     return { inp, out, tcs };
 };
@@ -163,41 +179,55 @@ type DiffStringsParams = {
 };
 const printDiff = ({ expected, received, tcs }: DiffStringsParams): void => {
     // we have to judge the number of testcase, and make that our increment count
+    if (tcs > 0) {
+        // sentinel value hack
+        let failedTC = 0;
 
-    let failedTC = 0;
+        const outputInc = expected.length / tcs;
 
-    const outputInc = expected.length / tcs;
+        for (let i = 0; i < expected.length; i += outputInc) {
+            let allMatched = true;
+            let expectedStitch = '';
+            let receivedStitch = '';
 
-    for (let i = 0; i < expected.length; i += outputInc) {
-        let allMatched = true;
-        let expectedStitch = '';
-        let receivedStitch = '';
+            // TC wise checking to give the appropriate failed test cases
+            for (let k = i; k < i + outputInc; k++) {
+                expectedStitch += expected[k] + '\n';
+                receivedStitch += (received[k] ?? '<EXPECTED OUTPUT>') + '\n';
 
-        for (let k = i; k < i + outputInc; k++) {
-            expectedStitch += expected[k] + '\n';
-            receivedStitch += (received[k] ?? '<EXPECTED OUTPUT>') + '\n';
+                if (expected[k].trim() != received[k].trim()) {
+                    allMatched = false;
+                }
+            }
 
-            if (expected[k].trim() != received[k].trim()) {
-                allMatched = false;
+            if (!allMatched) {
+                failedTC++;
+                console.log(`Failed Test Case Number: ${i / outputInc + 1}`);
+                console.log('Expected: ');
+                console.log(colors.green(expectedStitch.trim()));
+                console.log('Received: ');
+                console.log(colors.red(receivedStitch.trim()));
+                console.log();
             }
         }
-
-        if (!allMatched) {
-            failedTC++;
-            console.log(`Failed Test Case Number: ${i / outputInc + 1}`);
+        console.log(
+            `✅ (${colors.green(
+                `${tcs - failedTC} / ${tcs}`
+            )})  ❌ (${colors.red(`${failedTC} / ${tcs}`)}) `
+        );
+    } else {
+        if (expected == received) {
+            console.log('✅ All Passed');
+        } else if (tcs == -1) {
+            console.log('❌ Testcase failed');
             console.log('Expected: ');
-            console.log(expectedStitch.trim());
+            console.log(colors.green(expected.join('')));
             console.log('Received: ');
-            console.log(receivedStitch.trim());
-            console.log();
+            console.log(colors.red(received.join('')));
+        } else {
+            console.log(colors.red('❌ Some or all testcases have failed!'));
         }
     }
-
-    console.log(
-        `✅ (${colors.green(`${tcs - failedTC} / ${tcs}`)})  ❌ (${colors.red(
-            `${failedTC} / ${tcs}`
-        )}) `
-    );
 };
 
 const copyToClipboard = async (
