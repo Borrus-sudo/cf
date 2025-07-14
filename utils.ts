@@ -18,7 +18,7 @@ ${colors.italic(
         {
             title: `⚠️  ${colors.bold(colors.red('Error!'))}`,
             titleAlignment: 'left',
-            textAlignment: 'center',
+            textAlignment: 'left',
             padding: {
                 left: 4,
                 right: 4,
@@ -43,7 +43,7 @@ ${colors.italic(
         {
             title: `📋 ${colors.bold(colors.whiteBright('Info'))}`,
             titleAlignment: 'left',
-            textAlignment: 'center',
+            textAlignment: 'left',
             padding: {
                 left: 4,
                 right: 4,
