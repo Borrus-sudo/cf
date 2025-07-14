@@ -155,17 +155,35 @@ const exec = async ({
     if (!success) return { msg: new TextDecoder().decode(stderr) };
 
     // Running the exe, simulating input, returning errors if possible or the output
+    const controller = new AbortController();
 
     const cmd2 = new Deno.Command(exec2, {
         stderr: 'piped',
         stdin: 'piped',
         stdout: 'piped',
+        signal: controller.signal,
     });
     const child = cmd2.spawn();
+    setTimeout(() => {
+        controller.abort();
+    }, 5000);
     const writer = child.stdin.getWriter();
     await writer.write(new TextEncoder().encode(inp));
     await writer.close();
-    const payload = await child.output();
+    let aborted = false;
+    const payload = await child.output().catch((_) => {
+        aborted = true;
+        return _;
+    });
+
+    if (aborted) {
+        return {
+            msg: `Code took more than 5 seconds, this is maybe due to logical error or corrupted tcs from clipboard.
+            1) Recheck your code
+            2) Recopy the input and output from the codeforces problem page
+            `,
+        };
+    }
     if (!payload.success)
         return { msg: new TextDecoder().decode(payload.stderr) };
 
