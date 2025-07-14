@@ -1,10 +1,13 @@
 {
     "tasks": {
-        "dev": "deno run --allow-ffi --allow-read --allow-run main.ts p1.cpp",
+        "dev": "deno run --allow-ffi --allow-read --allow-run --allow-env --allow-sys main.ts p1.cpp",
         "compile": "deno compile --allow-ffi --allow-read --allow-run --include ./clipboard/clipboard.dll main.ts"
     },
     "imports": {
         "@std/fs": "jsr:@std/fs@^1.0.18",
-        "@std/path": "jsr:@std/path@^1.1.0"
+        "@std/path": "jsr:@std/path@^1.1.0",
+        "boxen": "npm:boxen@^8.0.1",
+        "yocto-spinner": "npm:yocto-spinner@^1.0.0",
+        "yoctocolors": "npm:yoctocolors@^2.1.1"
     }
 }
