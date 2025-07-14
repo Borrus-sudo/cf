@@ -1,6 +1,6 @@
 {
     "tasks": {
-        "dev": "deno run --allow-ffi --allow-read --allow-run --allow-env --allow-sys main.ts p1.cpp",
+        "dev": "deno run --allow-ffi --allow-read --allow-run --allow-env --allow-sys main.ts ./test/p1.cpp",
         "compile": "deno compile --allow-ffi --allow-read --allow-run --include ./clipboard/clipboard.dll main.ts"
     },
     "imports": {
