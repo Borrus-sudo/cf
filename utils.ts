@@ -1,9 +1,23 @@
 import colors from 'yoctocolors';
-import boxen from 'boxen';
+import boxen, { Options } from 'boxen';
 import { Kia, Spinners } from './deps.ts';
 
 export type Error = { msg: string };
 export type Result<T, E> = T | E;
+
+const boxenConfig: Options = {
+    titleAlignment: 'left',
+    textAlignment: 'left',
+    padding: {
+        left: 4,
+        right: 4,
+        top: 1,
+        bottom: 1,
+    },
+    width: 60,
+    margin: 1,
+    borderColor: 'yellow',
+};
 
 export const errorify = (err: string): string =>
     boxen(
@@ -17,17 +31,7 @@ ${colors.italic(
 `,
         {
             title: `⚠️  ${colors.bold(colors.red('Error!'))}`,
-            titleAlignment: 'left',
-            textAlignment: 'left',
-            padding: {
-                left: 4,
-                right: 4,
-                top: 1,
-                bottom: 1,
-            },
-            width: 60,
-            margin: 1,
-            borderColor: 'yellow',
+            ...boxenConfig,
         }
     );
 export const info = (info: string): string =>
@@ -42,31 +46,19 @@ ${colors.italic(
 `,
         {
             title: `📋 ${colors.bold(colors.whiteBright('Info'))}`,
-            titleAlignment: 'left',
-            textAlignment: 'left',
-            padding: {
-                left: 4,
-                right: 4,
-                top: 1,
-                bottom: 1,
-            },
-            width: 60,
-            margin: 1,
-            borderColor: 'yellow',
+            ...boxenConfig,
         }
     );
 
 export function Tasks() {
-    const spinner = new Kia.default({
-        spinner: Spinners.dots8,
-    });
+    const spinner = new Kia.default();
     return {
         createTask(title: string) {
-            spinner.set({ text: title });
+            spinner.set({ text: title, spinner: Spinners.dots8 });
             spinner.start();
         },
         succeedTask() {
-            spinner.succeed(`Finished: ${spinner.getText()}`);
+            spinner.succeed(`✅ Finished: ${spinner.getText()}`);
         },
         failTask(error: string) {
             spinner.fail(`Failed: ${spinner.getText()}`);

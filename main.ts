@@ -79,13 +79,19 @@ const getIO = (
                 // We get the latest at the front and we prefer the behind ones
                 if (idx + 1 < clipHist.length) {
                     buffOut = clipHist[idx + 1].trim().split('\n');
-                    if (buffOut.length % expectedTcs == 0) {
+                    if (
+                        buffOut.length % expectedTcs == 0 &&
+                        buffOut.length <= realNoLines // potentially problematic
+                    ) {
                         out = buffOut;
                     }
                 }
                 if (idx - 1 >= 0) {
                     buffOut = clipHist[idx - 1].trim().split('\n');
-                    if (buffOut.length % expectedTcs == 0) {
+                    if (
+                        buffOut.length % expectedTcs == 0 &&
+                        buffOut.length <= realNoLines // potentially problematic
+                    ) {
                         out = buffOut;
                     }
                 }
@@ -179,8 +185,10 @@ const exec = async ({
     if (aborted) {
         return {
             msg: `Code took more than 5 seconds, this is maybe due to logical error or corrupted tcs from clipboard.
-            1) Recheck your code
-            2) Recopy the input and output from the codeforces problem page
+            1) ${colors.underline('Recheck')} your code
+            2) ${colors.underline(
+                'Recopy the input and output'
+            )} from the codeforces problem page
             `,
         };
     }
@@ -213,7 +221,8 @@ const printDiff = ({ expected, received, tcs }: DiffStringsParams): void => {
                 expectedStitch += expected[k] + '\n';
                 receivedStitch += (received[k] ?? '<EXPECTED OUTPUT>') + '\n';
 
-                if (expected[k].trim() != received[k].trim()) {
+                if (expected[k].trim() != (received[k] ?? '').trim()) {
+                    // Just to prevent undefined checks
                     allMatched = false;
                 }
             }
@@ -229,10 +238,10 @@ const printDiff = ({ expected, received, tcs }: DiffStringsParams): void => {
             }
         }
         console.log(
-            `✅ (${colors.green(
+            `    Passed: (${colors.green(
                 `${tcs - failedTC} / ${tcs}`
-            )})  ❌ (${colors.red(`${failedTC} / ${tcs}`)}) `
-        );
+            )})  Failed: (${colors.red(`${failedTC} / ${tcs}`)}) `
+        ); // appropriate 
     } else {
         if (expected == received) {
             console.log('✅ All Passed');
