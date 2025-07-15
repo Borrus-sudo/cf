@@ -1,18 +1,51 @@
-import { type Result, type Error, errorify, Tasks, info } from './utils.ts';
+import {
+    type Result,
+    type Error,
+    errorify,
+    Tasks,
+    info,
+    isError,
+} from './utils.ts';
 import * as path from '@std/path';
 import * as fs from '@std/fs';
 import colors from 'yoctocolors';
 import { Clippy } from './deps.ts';
 
-const getClipboardHistory = (): Result<string[], Error> => {
-    const lib = Deno.dlopen('./clipboard/clipboard.dll', {
-        get_clipboard_items_count: { parameters: [], result: 'i32' },
-        get_clipboard_items: { parameters: [], result: 'pointer' },
-        free_clipboard_items: {
-            parameters: ['pointer', 'i32'],
-            result: 'void',
-        },
-    });
+const homeDir = Deno.env.get('USERPROFILE') ?? ''; // the coalesced condition should never reach
+const cacheDir = '/AppData/Local/cf'; // Do it for
+const ensureCacheExists = async (): Promise<Result<void, Error>> => {
+    if (!homeDir) {
+        return {
+            msg: 'Not able to fetch USERPROFILE env variable!', // for the sake of completeness ig
+        };
+    }
+    const myDir = path.join(homeDir, cacheDir);
+    await fs.ensureDir(myDir);
+};
+
+const getClipboardHistory = async (): Promise<Result<string[], Error>> => {
+    const res = await ensureCacheExists();
+    if (isError(res)) return res;
+
+    const lib = Deno.dlopen(
+        // {
+        //     name: 'clipboard',
+        //     url: {
+        //         windows:
+        //             'https://github.com/Borrus-sudo/cf/blob/master/clipboard',
+        //     },
+        //     location: path.join(homeDir, cacheDir),
+        // },
+        './clipboard/clipboard.dll',
+        {
+            get_clipboard_items_count: { parameters: [], result: 'i32' },
+            get_clipboard_items: { parameters: [], result: 'pointer' },
+            free_clipboard_items: {
+                parameters: ['pointer', 'i32'],
+                result: 'void',
+            },
+        }
+    );
 
     const count = lib.symbols.get_clipboard_items_count();
 
@@ -238,10 +271,10 @@ const printDiff = ({ expected, received, tcs }: DiffStringsParams): void => {
             }
         }
         console.log(
-            `    Passed: (${colors.green(
+            `    ${colors.blue('-')}  Passed: (${colors.green(
                 `${tcs - failedTC} / ${tcs}`
             )})  Failed: (${colors.red(`${failedTC} / ${tcs}`)}) `
-        ); // appropriate 
+        ); // appropriate
     } else {
         if (expected == received) {
             console.log('✅ All Passed');
@@ -269,15 +302,13 @@ const copyToClipboard = async (
     }
 };
 
-const isError = (inp: unknown): inp is Error =>
-    typeof inp == 'object' && inp != null && 'msg' in inp;
-
 if (import.meta.main) {
+    // try {
     const tasks = Tasks();
 
     // TASK 1
     tasks.createTask('Fetching CF Input/Output');
-    const items = getClipboardHistory();
+    const items = await getClipboardHistory();
 
     if (isError(items)) {
         tasks.failTask(errorify(items.msg));
@@ -306,7 +337,10 @@ if (import.meta.main) {
 
     // Task 3
     tasks.createTask('Executing code!');
-    const received = await exec({ inp: io.inp.join('\n'), fileLoc: file.loc });
+    const received = await exec({
+        inp: io.inp.join('\n'),
+        fileLoc: file.loc,
+    });
 
     if (isError(received)) {
         tasks.failTask(errorify(received.msg));
@@ -330,4 +364,8 @@ if (import.meta.main) {
     } else {
         tasks.succeedTask();
     }
+    // } catch (e) {
+    //@ts-ignore this should work
+    // console.log(errorify(e.msg));
+    // }
 }

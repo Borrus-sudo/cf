@@ -50,6 +50,9 @@ ${colors.italic(
         }
     );
 
+export const isError = (inp: unknown): inp is Error =>  // type predicate
+    typeof inp == 'object' && inp != null && 'msg' in inp;
+
 export function Tasks() {
     const spinner = new Kia.default();
     return {
